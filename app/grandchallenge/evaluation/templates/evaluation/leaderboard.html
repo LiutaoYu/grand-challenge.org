@@ -34,6 +34,7 @@
                         (Team)
                     {% endif %}
                 </th>
+
                 <th>Created</th>
 
                 {% if evaluation_config.scoring_method_choice == evaluation_config.MEAN %}
@@ -75,114 +76,7 @@
                 {% endif %}
             </tr>
             </thead>
-            <tbody>
-            {% for evaluation in object_list %}
-                <tr>
-
-                    <td data-order="{{ evaluation.rank }}">{{ evaluation.rank|ordinal }}</td>
-
-                    <td>
-
-                        {{ evaluation.creator|user_profile_link }}
-
-                        {% if evaluation_config.use_teams %}
-                            {% with user_teams|get_key:evaluation.creator.username as team %}
-                                {% if team %}
-                                    (<a href="{{ team.1 }}">{{ team.0 }}</a>)
-                                {% endif %}
-                            {% endwith %}
-                        {% endif %}
-
-                    </td>
-
-                    <td data-order="{{ evaluation.created|date:"U" }}"
-                        style="white-space: nowrap;">
-                        {{ evaluation.created|date:"j N Y" }}
-                    </td>
-
-                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                        <td>
-                            <a href="{{ evaluation.get_absolute_url }}">
-                                <b>{{ evaluation.rank_score|floatformat }}</b>
-                            </a>
-                        </td>
-                    {% endif %}
-
-                    {% with evaluation.metrics.0|get_jsonpath:evaluation_config.score_jsonpath as metric %}
-                        <td data-order="{{ metric }}"
-                                {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                            class="toggable"
-                                {% endif %}
-                        >
-                            <a href="{{ evaluation.get_absolute_url }}">
-                                {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                    <b>{% endif %}
-                                {% filter remove_whitespace %}
-                                    {{ metric|floatformat:evaluation_config.score_decimal_places }}
-                                    {% if evaluation_config.score_error_jsonpath %}
-                                        &nbsp;±&nbsp;
-                                        {{ evaluation.metrics.0|get_jsonpath:evaluation_config.score_error_jsonpath|floatformat:evaluation_config.score_decimal_places }}
-                                    {% endif %}
-                                    {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                                        &nbsp;(
-                                        {{ evaluation.rank_per_metric|get_key:evaluation_config.score_jsonpath }}
-                                        )
-                                    {% endif %}
-                                {% endfilter %}
-                                {% if evaluation_config.scoring_method_choice == evaluation_config.ABSOLUTE %}
-                                    </b>{% endif %}
-                            </a>
-                        </td>
-                    {% endwith %}
-
-                    {% for col in evaluation_config.extra_results_columns %}
-                        {% with evaluation.metrics.0|get_jsonpath:col.path as metric %}
-                            <td data-order="{{ metric }}" class="toggable">
-                                <a href="{{ evaluation.get_absolute_url }}">
-                                    {% filter remove_whitespace %}
-                                        {{ metric|floatformat:evaluation_config.score_decimal_places }}
-                                        {% if col.error_path %}
-                                            &nbsp;±&nbsp;
-                                            {{ evaluation.metrics.0|get_jsonpath:col.error_path|floatformat:evaluation_config.score_decimal_places }}
-                                        {% endif %}
-                                        {% if evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
-                                            &nbsp;(
-                                            {{ evaluation.rank_per_metric|get_key:col.path }}
-                                            )
-                                        {% endif %}
-                                    {% endfilter %}
-                                </a>
-                            </td>
-                        {% endwith %}
-                    {% endfor %}
-
-                    {% if evaluation_config.display_submission_comments %}
-                        <td>{{ evaluation.submission.comment }}</td>
-                    {% endif %}
-
-                    {% if evaluation_config.show_publication_url %}
-                        <td>
-                            {% if evaluation.submission.publication_url %}
-                                <a href="{{ evaluation.submission.publication_url }}">
-                                    <i class="fa fa-file"></i>
-                                </a>
-                            {% endif %}
-                        </td>
-                    {% endif %}
-
-                    {% if evaluation_config.show_supplementary_file_link %}
-                        <th>
-                            {% if evaluation.submission.supplementary_file %}
-                                <a href="{{ evaluation.submission.supplementary_file.url }}">
-                                    <i class="fa fa-file"></i>
-                                </a>
-                            {% endif %}
-                        </th>
-                    {% endif %}
-
-                </tr>
-            {% endfor %}
-            </tbody>
+            <tbody></tbody>
         </table>
     </div>
 
@@ -207,23 +101,27 @@
                     set up.
                 {% endcomment %}
                 order: [[0, "asc"]],
-                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                "pageLength": 50,
-                "columnDefs": [{
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                pageLength: 50,
+                columnDefs: [{
                     {%  if evaluation_config.show_supplementary_file_link %}
-                        "targets": [-1],
+                        targets: [-1],
                     {% endif %}
-                    "searchable": false,
-                    "orderable": false,
-                    "visible": true
+                    searchable: false,
+                    orderable: false,
+                    visible: true
                 }
                     {% if evaluation_config.extra_results_columns|length > 0 or evaluation_config.scoring_method_choice != evaluation_config.ABSOLUTE %}
                         ,{
-                        "targets": 'toggable',
-                        "visible": false,
+                        targets: 'toggable',
+                        visible: false,
                     }
                     {% endif %}
                 ],
+                serverSide: true,
+                ajax: {
+                    url: "",
+                },
                 ordering: true,
                 autoWidth: false,
                 {% comment %}

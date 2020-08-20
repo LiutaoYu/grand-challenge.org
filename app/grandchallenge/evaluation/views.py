@@ -13,6 +13,7 @@ from grandchallenge.core.permissions.mixins import (
     UserIsChallengeAdminMixin,
     UserIsChallengeParticipantOrAdminMixin,
 )
+from grandchallenge.core.views import PaginatedTableListView
 from grandchallenge.evaluation.forms import (
     ConfigForm,
     LegacySubmissionForm,
@@ -286,11 +287,28 @@ class EvaluationDetail(DetailView):
         return context
 
 
-class Leaderboard(TeamContextMixin, ListView):
+class Leaderboard(TeamContextMixin, PaginatedTableListView):
     model = Evaluation
     template_name = "evaluation/leaderboard.html"
+    row_template = "evaluation/leaderboard_row.html"
 
-    def get_queryset(self):
+    @property
+    def columns(self):
+        # TODO: Return the columns based on the evaluation options
+        # TODO: Work out how to sort with the m2m and json lookup
+        return [
+            "rank",
+            "submission__creator__username",
+            "created",
+        ]
+
+    def get_row_context(self, job, *args, **kwargs):
+        # TODO: cache the context data request
+        context = self.get_context_data(*args, **kwargs)
+        context.update({"evaluation": job})
+        return context
+
+    def get_unfiltered_queryset(self):
         queryset = super().get_queryset()
         queryset = (
             queryset.select_related(
